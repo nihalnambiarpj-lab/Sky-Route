@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Book {{ flight.flight_number }} — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="auth-page">
+  <form class="auth-card" method="POST">
+    <div class="pass-head">
+      <span class="mark">SkyRoute</span>
+      <span class="label">Passenger Details</span>
+    </div>
+    <h1>Book flight {{ flight.flight_number }}</h1>
+    <p class="booking-summary">
+      {{ flight.origin_code }} ({{ flight.origin_city }}) &#8594; {{ flight.destination_code }} ({{ flight.destination_city }})<br>
+      Departs {{ flight.departure_time }} · Arrives {{ flight.arrival_time }}<br>
+      Gate {{ flight.gate }} · Fare &#8377;{{ "%.0f"|format(flight.price) }}
+    </p>
+
+    <label for="passenger_name">Passenger full name</label>
+    <input type="text" id="passenger_name" name="passenger_name" required autofocus>
+
+    <label for="seat_number">Seat number (e.g. 14A)</label>
+    <input type="text" id="seat_number" name="seat_number" required>
+
+    <button type="submit" class="search-btn">Confirm booking</button>
+  </form>
+</section>
+
+{% endblock %}

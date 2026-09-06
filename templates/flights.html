@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Flights — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <div class="eyebrow">Schedule</div>
+  <h1>Available flights</h1>
+  <p>Anyone can search and browse. Log in to book a seat.</p>
+</section>
+
+<section class="filter-bar">
+  <form class="filter-form" method="GET">
+    <div class="field">
+      <label>From</label>
+      <select name="from">
+        <option value="">Any</option>
+        {% for code, city in airports %}
+        <option value="{{ code }}" {% if selected_from == code %}selected{% endif %}>{{ code }} — {{ city }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>To</label>
+      <select name="to">
+        <option value="">Any</option>
+        {% for code, city in airports %}
+        <option value="{{ code }}" {% if selected_to == code %}selected{% endif %}>{{ code }} — {{ city }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" name="date" value="{{ selected_date }}">
+    </div>
+    <button type="submit">Search</button>
+  </form>
+</section>
+
+<section class="flight-list">
+  {% for f in flights %}
+  <div class="flight-card">
+    <div class="flight-route">
+      {{ f.origin_code }} <span class="arrow">&#8594;</span> {{ f.destination_code }}
+    </div>
+    <div class="flight-meta">
+      <span>Flight {{ f.flight_number }}</span>
+      <span>Depart {{ f.departure_time }}</span>
+      <span>Arrive {{ f.arrival_time }}</span>
+      <span>Gate {{ f.gate }}</span>
+      <span>{{ f.seats_total - f.seats_taken }} seats left</span>
+    </div>
+    <div class="flight-price">
+      <span>&#8377;{{ "%.0f"|format(f.price) }}</span>
+      {% if f.seats_taken >= f.seats_total %}
+        <span class="btn-disabled">Fully booked</span>
+      {% else %}
+        <a href="{{ url_for('book_flight', flight_id=f.id) }}" class="btn-amber">Book now</a>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-note">No flights match that search. Try clearing a filter, or <a href="{{ url_for('flights') }}">view all flights</a>.</p>
+  {% endfor %}
+</section>
+
+{% endblock %}

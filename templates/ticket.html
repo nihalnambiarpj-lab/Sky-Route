@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Ticket {{ booking.booking_ref }} — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="ticket-page">
+  <div class="ticket">
+    <div class="ticket-header">
+      <div class="brand"><span>SkyRoute</span></div>
+      <span class="ticket-ref">{{ booking.booking_ref }}</span>
+    </div>
+    <div class="ticket-route">
+      {{ booking.origin_code }} <span class="arrow">&#8594;</span> {{ booking.destination_code }}
+    </div>
+    <div class="ticket-grid">
+      <div><span class="label">Passenger</span><span class="value">{{ booking.passenger_name }}</span></div>
+      <div><span class="label">Flight</span><span class="value">{{ booking.flight_number }}</span></div>
+      <div><span class="label">Seat</span><span class="value">{{ booking.seat_number }}</span></div>
+      <div><span class="label">Gate</span><span class="value">{{ booking.gate }}</span></div>
+      <div><span class="label">Departs</span><span class="value">{{ booking.departure_time }}</span></div>
+      <div><span class="label">Arrives</span><span class="value">{{ booking.arrival_time }}</span></div>
+      <div><span class="label">Fare paid</span><span class="value">&#8377;{{ "%.0f"|format(booking.price) }}</span></div>
+      <div><span class="label">Status</span><span class="value">{{ booking.status|capitalize }}</span></div>
+    </div>
+    <div class="ticket-barcode" aria-hidden="true">
+      <i style="height:34px"></i><i style="height:20px"></i><i style="height:30px"></i><i style="height:16px"></i>
+      <i style="height:34px"></i><i style="height:24px"></i><i style="height:30px"></i><i style="height:18px"></i>
+      <i style="height:34px"></i><i style="height:22px"></i><i style="height:30px"></i><i style="height:20px"></i>
+      <i style="height:34px"></i><i style="height:16px"></i><i style="height:30px"></i>
+    </div>
+  </div>
+  <a href="{{ url_for('my_bookings') }}" class="btn-outline">Back to my bookings</a>
+</section>
+
+{% endblock %}

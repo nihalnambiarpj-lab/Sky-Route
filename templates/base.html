@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SkyRoute — Flight Ticket Booking{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a href="{{ url_for('home') }}" class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-3 1.5V22l4.5-1 4.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      <span>SkyRoute</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('home') }}#book">Book</a></li>
+      <li><a href="{{ url_for('home') }}#board">Live board</a></li>
+      <li><a href="{{ url_for('home') }}#features">Features</a></li>
+      <li><a href="{{ url_for('home') }}#process">How it works</a></li>
+    </ul>
+    <div class="nav-cta">
+      {% if session.user_id %}
+        {% if session.role == 'admin' %}
+          <a href="{{ url_for('admin_dashboard') }}" class="btn-ghost">Admin panel</a>
+        {% else %}
+          <a href="{{ url_for('my_bookings') }}" class="btn-ghost">My bookings</a>
+        {% endif %}
+        <span class="nav-user">{{ session.full_name.split(' ')[0] }}</span>
+        <a href="{{ url_for('logout') }}" class="btn-amber">Log out</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="btn-ghost">Sign in</a>
+        <a href="{{ url_for('flights') }}" class="btn-amber">Book now</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--amber)"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-3 1.5V22l4.5-1 4.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+          <span>SkyRoute</span>
+        </div>
+        <p>A Python-based flight ticket booking system with real-time search, seat selection and instant e-tickets.</p>
+      </div>
+      <div>
+        <div class="crew-label">Project crew</div>
+        <ul class="crew-list">
+          <li><span>Nihal</span><span class="role">39</span></li>
+          <li><span>Veena</span><span class="role">57</span></li>
+          <li><span>Shibhin</span><span class="role">52</span></li>
+          <li><span>Srevan</span><span class="role">54</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>College of Engineering Vadakara</span>
+      <span>Live backend · SQLite + Flask</span>
+    </div>
+  </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

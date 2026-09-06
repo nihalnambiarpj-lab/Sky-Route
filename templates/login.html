@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Log in — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="auth-page">
+  <form class="auth-card" method="POST" action="{{ url_for('login', next=request.args.get('next')) }}">
+    <div class="pass-head">
+      <span class="mark">SkyRoute</span>
+      <span class="label">Member Access</span>
+    </div>
+    <h1>Log in</h1>
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required autofocus>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit" class="search-btn">Log in</button>
+    <p class="auth-switch">No account yet? <a href="{{ url_for('register') }}">Sign up</a></p>
+    <p class="auth-hint">Admin demo login — admin@skyroute.com / Admin@123</p>
+  </form>
+</section>
+
+{% endblock %}

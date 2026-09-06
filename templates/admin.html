@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <div class="eyebrow">Restricted</div>
+  <h1>Admin panel</h1>
+  <p>Visible only to accounts with the admin role — anyone else gets a 403.</p>
+</section>
+
+<section class="admin-grid">
+
+  <div class="admin-panel">
+    <h2>Add a flight</h2>
+    <form method="POST" action="{{ url_for('admin_add_flight') }}" class="admin-form">
+      <input type="text" name="flight_number" placeholder="Flight no. (SK606)" required>
+      <input type="text" name="origin_code" placeholder="Origin code (COK)" maxlength="4" required>
+      <input type="text" name="origin_city" placeholder="Origin city" required>
+      <input type="text" name="destination_code" placeholder="Destination code" maxlength="4" required>
+      <input type="text" name="destination_city" placeholder="Destination city" required>
+      <input type="text" name="departure_time" placeholder="Departure (YYYY-MM-DD HH:MM)" required>
+      <input type="text" name="arrival_time" placeholder="Arrival (YYYY-MM-DD HH:MM)" required>
+      <input type="text" name="gate" placeholder="Gate (G12)">
+      <input type="number" step="0.01" name="price" placeholder="Price" required>
+      <input type="number" name="seats_total" placeholder="Total seats" value="60" required>
+      <button type="submit">Add flight</button>
+    </form>
+  </div>
+
+  <div class="admin-panel">
+    <h2>Flights ({{ flights|length }})</h2>
+    <table class="admin-table">
+      <tr><th>No.</th><th>Route</th><th>Seats</th><th>Price</th><th></th></tr>
+      {% for f in flights %}
+      <tr>
+        <td>{{ f.flight_number }}</td>
+        <td>{{ f.origin_code }} &#8594; {{ f.destination_code }}</td>
+        <td>{{ f.seats_taken }}/{{ f.seats_total }}</td>
+        <td>&#8377;{{ "%.0f"|format(f.price) }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin_delete_flight', flight_id=f.id) }}">
+            <button type="submit" class="btn-small">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="admin-panel">
+    <h2>Registered users ({{ users|length }})</h2>
+    <table class="admin-table">
+      <tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th></th></tr>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.full_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ u.created_at }}</td>
+        <td>
+          {% if u.role != 'admin' %}
+          <form method="POST" action="{{ url_for('admin_delete_user', user_id=u.id) }}">
+            <button type="submit" class="btn-small">Remove</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="admin-panel">
+    <h2>Bookings ({{ bookings|length }})</h2>
+    <table class="admin-table">
+      <tr><th>Ref</th><th>User</th><th>Flight</th><th>Seat</th><th>Status</th></tr>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.booking_ref }}</td>
+        <td>{{ b.user_name }} ({{ b.user_email }})</td>
+        <td>{{ b.flight_number }}: {{ b.origin_code }} &#8594; {{ b.destination_code }}</td>
+        <td>{{ b.seat_number }}</td>
+        <td>{{ b.status|capitalize }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+</section>
+
+{% endblock %}

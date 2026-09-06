@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}SkyRoute — Board faster. Fly sooner.{% endblock %}
+{% block content %}
+
+<!-- HERO -->
+<section class="hero" id="book">
+  <div class="wrap">
+    <div class="hero-copy">
+      <div class="eyebrow">Flight reservations, simplified</div>
+      <h1>Board faster.<br>Fly <em>sooner.</em></h1>
+      <p class="lead">Search live fares, pick your seat on the spot, and get a scannable e-ticket the moment you confirm — no counters, no waiting.</p>
+      <div class="hero-actions">
+        <a href="#book-form" class="btn-amber-lg">
+          Search flights
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#process" class="btn-outline">See how it works</a>
+      </div>
+      <div class="hero-tags">
+        <span class="tag">Real-time fares</span>
+        <span class="tag">Live seat maps</span>
+        <span class="tag">Instant e-tickets</span>
+      </div>
+    </div>
+
+    <!-- BOARDING PASS SEARCH CARD -->
+    <div class="pass" id="book-form">
+      <form action="{{ url_for('flights') }}" method="GET">
+        <div class="pass-top">
+          <div class="pass-head">
+            <span class="mark">SkyRoute</span>
+            <span class="label">Boarding Pass · Search</span>
+          </div>
+
+          <div class="route-row">
+            <div class="field">
+              <label>From</label>
+              <select name="from" id="fromSel">
+                {% for code, city in airports %}
+                <option value="{{ code }}">{{ code }} — {{ city }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="button" class="swap-btn" id="swapBtn" aria-label="Swap origin and destination">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l-4 4 4 4M3 14h18M17 4l4 4-4 4M21 8H3"/></svg>
+            </button>
+            <div class="field">
+              <label>To</label>
+              <select name="to" id="toSel">
+                {% for code, city in airports %}
+                <option value="{{ code }}" {% if loop.index == 2 %}selected{% endif %}>{{ code }} — {{ city }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="sub-row">
+            <div class="field">
+              <label>Depart</label>
+              <input type="date" name="date" value="2026-09-20">
+            </div>
+          </div>
+
+          <button type="submit" class="search-btn">
+            Search flights
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-3 1.5V22l4.5-1 4.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+          </button>
+        </div>
+
+        <div class="perf"></div>
+
+        <div class="pass-bottom">
+          <div class="stub-info">
+            <div><span class="k">Class</span><span class="v">Economy</span></div>
+            <div><span class="k">Seat</span><span class="v">Open</span></div>
+            <div><span class="k">Access</span><span class="v">Members</span></div>
+          </div>
+          <div class="barcode" aria-hidden="true">
+            <i style="height:34px"></i><i style="height:20px"></i><i style="height:30px"></i><i style="height:16px"></i>
+            <i style="height:34px"></i><i style="height:24px"></i><i style="height:30px"></i><i style="height:18px"></i>
+            <i style="height:34px"></i><i style="height:22px"></i><i style="height:30px"></i>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- DEPARTURE BOARD -->
+<section class="board-section" id="board">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Live board</div>
+      <h2>Popular routes right now</h2>
+      <p>Pulled straight from the SkyRoute database — book any of these and it updates in real time.</p>
+    </div>
+
+    <div class="board" id="depBoard">
+      <div class="board-row header">
+        <span>Flight</span><span>Route</span><span>Depart</span><span>Gate</span><span>Status</span>
+      </div>
+      {% for f in upcoming %}
+      <div class="board-row data">
+        <span>{{ f.flight_number }}</span>
+        <span>{{ f.origin_code }} &#8594; {{ f.destination_code }}</span>
+        <span>{{ f.departure_time.split(' ')[1] if ' ' in f.departure_time else f.departure_time }}</span>
+        <span>{{ f.gate }}</span>
+        {% set st = flight_status(f) %}
+        <span class="status {{ st }}">{{ "Full" if st == "full" else "On time" }}</span>
+      </div>
+      {% else %}
+      <div class="board-row data"><span>No flights scheduled.</span></div>
+      {% endfor %}
+    </div>
+
+    <div class="board-cta">
+      <a href="{{ url_for('flights') }}" class="btn-outline">View all flights</a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">What's under the hood</div>
+      <h2>Built for the whole booking flow</h2>
+      <p>Four systems working together so a booking takes minutes, not counters.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+        <h3>Real-time search</h3>
+        <p>Live fares and open seats across every route, refreshed the moment you search.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 10v4M12 10v4M17 10v4"/></svg>
+        </div>
+        <h3>Seat selection</h3>
+        <p>Pick your own seat number when you book — the system rejects any seat already taken.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h2M8 15h2M12 15h2M16 15h2"/></svg>
+        </div>
+        <h3>Automated fare calculation</h3>
+        <p>Fares are pulled straight from the flight record — nothing to add up by hand.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4z"/><path d="M12 5v14" stroke-dasharray="2 3"/></svg>
+        </div>
+        <h3>Instant e-ticket</h3>
+        <p>Confirm your booking and get a reference-numbered e-ticket right away.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process" id="process">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">From search to seat</div>
+      <h2>Five steps, start to boarding pass</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="num">01</span>
+        <div><h3>Search your route</h3><p>Enter where and when you're flying — SkyRoute pulls every matching flight.</p></div>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <div><h3>Compare schedules</h3><p>Browse departure times and fares side by side, and pick what fits.</p></div>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <div><h3>Create your account</h3><p>Booking is for registered passengers — sign up in seconds if you haven't already.</p></div>
+      </div>
+      <div class="step">
+        <span class="num">04</span>
+        <div><h3>Add passenger &amp; seat</h3><p>Enter who's flying and claim your seat number — taken seats are blocked automatically.</p></div>
+      </div>
+      <div class="step">
+        <span class="num">05</span>
+        <div><h3>Confirm and fly</h3><p>Review the fare, confirm, and your e-ticket lands right away.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Swap From/To
+  const fromSel = document.getElementById('fromSel');
+  const toSel = document.getElementById('toSel');
+  const swapBtn = document.getElementById('swapBtn');
+  swapBtn.addEventListener('click', () => {
+    const tmp = fromSel.value;
+    fromSel.value = toSel.value;
+    toSel.value = tmp;
+    swapBtn.classList.toggle('spin');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Bookings — SkyRoute{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <div class="eyebrow">Your account</div>
+  <h1>My bookings</h1>
+</section>
+
+<section class="flight-list">
+  {% for b in bookings %}
+  <div class="flight-card">
+    <div class="flight-route">
+      {{ b.origin_code }} <span class="arrow">&#8594;</span> {{ b.destination_code }}
+    </div>
+    <div class="flight-meta">
+      <span>Flight {{ b.flight_number }}</span>
+      <span>Seat {{ b.seat_number }}</span>
+      <span>Ref {{ b.booking_ref }}</span>
+      <span>{{ b.status|capitalize }}</span>
+    </div>
+    <div class="flight-price">
+      <a href="{{ url_for('booking_confirmation', booking_ref=b.booking_ref) }}" class="btn-amber">View ticket</a>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty-note">You haven't booked any flights yet. <a href="{{ url_for('flights') }}">Browse flights</a>.</p>
+  {% endfor %}
+</section>
+
+{% endblock %}
