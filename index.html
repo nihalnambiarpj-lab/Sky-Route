@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SkyRoute — Flight Ticket Booking & Admin System</title>
-<meta name="description" content="SkyRoute flight ticket booking and admin management system with real-time route search, seat selection, departure board, e-tickets, and full admin dashboard.">
+<title>SkyRoute — Flight Ticket Booking & Auth System</title>
+<meta name="description" content="SkyRoute flight ticket booking with full authentication, role-based admin controls, real-time route search, seat selection, and e-tickets.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -50,6 +50,23 @@ select,input{font-family:inherit;}
 
 *:focus-visible{outline:2px solid var(--amber); outline-offset:3px; border-radius:4px;}
 
+/* ---------- FLASH TOAST ---------- */
+.flash-wrap{
+  position:fixed; top:86px; left:50%; transform:translateX(-50%); z-index:9999;
+  width:90%; max-width:480px; pointer-events:none;
+}
+.flash{
+  font-family:var(--f-mono); font-size:13px; letter-spacing:0.02em;
+  padding:14px 18px; border-radius:10px; margin-bottom:10px;
+  border:1px solid var(--line); pointer-events:auto;
+  box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  animation:slideDown .3s ease-out;
+  display:flex; justify-content:space-between; align-items:center;
+}
+@keyframes slideDown{from{opacity:0; transform:translateY(-15px);} to{opacity:1; transform:translateY(0);}}
+.flash-success{ color:var(--amber); border-color:rgba(201,169,104,0.4); background:#181714; }
+.flash-error{ color:var(--red); border-color:rgba(193,88,75,0.4); background:#1A1211; }
+
 /* ---------- NAVIGATION ---------- */
 .nav{
   position:sticky; top:0; z-index:100;
@@ -74,14 +91,16 @@ select,input{font-family:inherit;}
   transition:color .2s ease;
 }
 .nav-links a:hover{color:var(--paper);}
-.nav-cta{display:flex; align-items:center; gap:12px;}
+.nav-cta{display:flex; align-items:center; gap:10px;}
 
-.role-badge{
-  font-family:var(--f-mono); font-size:11px; padding:4px 10px; border-radius:999px;
-  background:rgba(201,169,104,0.15); border:1px solid var(--amber); color:var(--amber);
-  display:inline-flex; align-items:center; gap:5px; cursor:pointer;
+.user-badge{
+  font-family:var(--f-mono); font-size:12px; color:var(--amber);
+  display:inline-flex; align-items:center; gap:6px; background:rgba(201,169,104,0.1);
+  padding:5px 12px; border-radius:999px; border:1px solid rgba(201,169,104,0.25);
 }
-.role-badge:hover{background:rgba(201,169,104,0.25);}
+.user-badge.admin{
+  color:#F08075; background:rgba(193,88,75,0.15); border-color:rgba(193,88,75,0.4);
+}
 
 .btn-ghost{
   background:none; border:none; color:var(--paper);
@@ -92,7 +111,7 @@ select,input{font-family:inherit;}
 
 .btn-admin{
   background:rgba(193,88,75,0.15); border:1px solid rgba(193,88,75,0.5); color:#F08075;
-  font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px;
+  font-size:13px; font-weight:700; padding:7px 14px; border-radius:999px;
   display:inline-flex; align-items:center; gap:6px; transition:all .2s;
 }
 .btn-admin:hover{background:rgba(193,88,75,0.3); border-color:#F08075; color:#fff;}
@@ -107,7 +126,7 @@ select,input{font-family:inherit;}
 }
 .btn-amber:hover{background:#DCC28C; transform:translateY(-1px); box-shadow:0 6px 20px rgba(201,169,104,0.4);}
 
-@media (max-width:920px){ .nav-links{display:none;} }
+@media (max-width:960px){ .nav-links{display:none;} }
 
 /* ---------- HERO ---------- */
 .hero{
@@ -331,7 +350,7 @@ select,input{font-family:inherit;}
 .flight-price{font-family:var(--f-display); font-weight:800; font-size:27px; color:var(--amber);}
 
 /* ---------- ADMIN MODAL / DASHBOARD ---------- */
-.admin-modal-grid{display:flex; flex-direction:column; gap:24px;}
+.admin-modal-grid{display:flex; flex-direction:column; gap:22px;}
 .admin-box{
   background:var(--paper-2); border-radius:12px; padding:20px; border:1px solid rgba(21,22,26,0.1);
 }
@@ -439,6 +458,19 @@ select,input{font-family:inherit;}
 
 .modal-body{padding:24px; overflow-y:auto;}
 
+/* Auth form styling */
+.auth-field{margin-bottom:14px;}
+.auth-field label{
+  display:block; font-family:var(--f-mono); font-size:10px; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--muted-2); margin-bottom:5px;
+}
+.auth-field input{
+  width:100%; background:none; border:none; border-bottom:2px solid rgba(21,22,26,0.2);
+  font-family:var(--f-mono); font-weight:600; font-size:15px; color:var(--ink);
+  padding:6px 0 8px;
+}
+.auth-field input:focus{border-bottom-color:var(--amber-dim); outline:none;}
+
 .seat-picker{
   display:grid; grid-template-columns:repeat(6, 1fr); gap:8px; margin:16px 0;
 }
@@ -507,6 +539,9 @@ footer{background:var(--night-4); padding:60px 0 30px;}
 </head>
 <body>
 
+<!-- FLASH NOTIFICATION CONTAINER -->
+<div class="flash-wrap" id="flashWrap"></div>
+
 <!-- NAV -->
 <header class="nav">
   <div class="wrap">
@@ -521,13 +556,8 @@ footer{background:var(--night-4); padding:60px 0 30px;}
       <li><a href="#features">Features</a></li>
       <li><a href="#process">How It Works</a></li>
     </ul>
-    <div class="nav-cta">
-      <button class="btn-admin" onclick="openAdminModal()">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        Admin Panel
-      </button>
-      <button class="btn-ghost" onclick="openMyBookings()">Bookings (<span id="bookingCount">0</span>)</button>
-      <button class="btn-amber" onclick="scrollToSection('book')">Search</button>
+    <div class="nav-cta" id="navCta">
+      <!-- Injected via JavaScript based on Auth state -->
     </div>
   </div>
 </header>
@@ -538,20 +568,20 @@ footer{background:var(--night-4); padding:60px 0 30px;}
     <div class="hero-copy">
       <div class="eyebrow">Flight reservations, simplified</div>
       <h1>Board faster.<br>Fly <em>sooner.</em></h1>
-      <p class="lead">Search live routes, select your preferred seat on the spot, and generate a verified digital boarding pass in seconds — complete with admin controls.</p>
+      <p class="lead">Search live routes, select your seat, and generate a verified digital boarding pass in seconds. Complete with authentic user auth and admin controls.</p>
       <div class="hero-actions">
         <button onclick="scrollToSection('book-form')" class="btn-amber-lg">
           Search flights
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
-        <button onclick="openAdminModal()" class="btn-outline">
-          Open Admin Panel
+        <button onclick="handleAdminNavClick()" class="btn-outline">
+          Admin Panel
         </button>
       </div>
       <div class="hero-tags">
         <span class="tag">Real-time fares</span>
         <span class="tag">Live seat map</span>
-        <span class="tag">Admin Management</span>
+        <span class="tag">User Auth &amp; Sessions</span>
       </div>
     </div>
 
@@ -615,7 +645,7 @@ footer{background:var(--night-4); padding:60px 0 30px;}
           <div class="stub-info">
             <div><span class="k">Class</span><span class="v">Economy</span></div>
             <div><span class="k">Seat</span><span class="v">Instant Pick</span></div>
-            <div><span class="k">Role</span><span class="v" style="color:var(--red);">Admin Access</span></div>
+            <div><span class="k">Status</span><span class="v" id="stubStatus">Registered Access</span></div>
           </div>
           <div class="barcode" aria-hidden="true">
             <i style="height:32px"></i><i style="height:20px"></i><i style="height:28px"></i><i style="height:16px"></i>
@@ -665,7 +695,7 @@ footer{background:var(--night-4); padding:60px 0 30px;}
         <p id="resultsSub">Browse fares and claim your seat instantly.</p>
       </div>
       <div style="display:flex; gap:10px;">
-        <button class="btn-admin" onclick="openAdminModal()">+ Add New Flight</button>
+        <button class="btn-admin" onclick="handleAdminNavClick()">+ Add Flight</button>
         <button class="btn-outline" onclick="resetFilters()">Show All Flights</button>
       </div>
     </div>
@@ -737,7 +767,7 @@ footer{background:var(--night-4); padding:60px 0 30px;}
       </div>
       <div class="step">
         <span class="num">03</span>
-        <div><h3>Passenger info</h3><p>Enter traveler details and pick an open seat directly on the cabin grid.</p></div>
+        <div><h3>Passenger info</h3><p>Sign in with your account and pick an open seat directly on the cabin grid.</p></div>
       </div>
       <div class="step">
         <span class="num">04</span>
@@ -774,18 +804,88 @@ footer{background:var(--night-4); padding:60px 0 30px;}
     </div>
     <div class="footer-bottom">
       <span>College of Engineering Vadakara</span>
-      <span>SkyRoute · Interactive Showcase Edition</span>
+      <span>SkyRoute · Live Interactive &amp; Auth Edition</span>
     </div>
   </div>
 </footer>
 
+<!-- AUTH MODAL (LOGIN & SIGN UP) -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal-card" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 id="authModalTitle">Member Sign In</h3>
+      <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- Quick Demo Login Buttons -->
+      <div style="background:var(--paper-2); padding:12px 14px; border-radius:10px; margin-bottom:18px;">
+        <div style="font-family:var(--f-mono); font-size:10.5px; color:var(--muted-2); text-transform:uppercase; margin-bottom:8px; font-weight:700;">⚡ Quick Demo Login:</div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-book-sm" onclick="quickLogin('admin@skyroute.com', 'Admin@123')" style="background:var(--red); color:#fff; font-size:11px;">
+            Log In as Admin
+          </button>
+          <button type="button" class="btn-book-sm" onclick="quickLogin('nihal@example.com', 'Nihal@123')" style="font-size:11px;">
+            Log In as Passenger
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="auth-field">
+          <label for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" placeholder="admin@skyroute.com" required autofocus>
+        </div>
+        <div class="auth-field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="search-btn" style="margin-top:16px;">
+          Sign In
+        </button>
+        <p style="text-align:center; margin-top:16px; font-size:13.5px; color:var(--muted-2);">
+          No account yet? <a href="javascript:void(0)" onclick="toggleAuthMode('register')" style="color:var(--amber-dim); font-weight:700;">Sign up</a>
+        </p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display:none;">
+        <div class="auth-field">
+          <label for="regName">Full Name</label>
+          <input type="text" id="regName" placeholder="e.g. Nihal Nambiar" required>
+        </div>
+        <div class="auth-field">
+          <label for="regEmail">Email Address</label>
+          <input type="email" id="regEmail" placeholder="name@example.com" required>
+        </div>
+        <div class="auth-field">
+          <label for="regPassword">Password (min 6 chars)</label>
+          <input type="password" id="regPassword" minlength="6" placeholder="••••••••" required>
+        </div>
+        <div class="auth-field">
+          <label for="regConfirm">Confirm Password</label>
+          <input type="password" id="regConfirm" minlength="6" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="search-btn" style="margin-top:16px;">
+          Create Account
+        </button>
+        <p style="text-align:center; margin-top:16px; font-size:13.5px; color:var(--muted-2);">
+          Already have an account? <a href="javascript:void(0)" onclick="toggleAuthMode('login')" style="color:var(--amber-dim); font-weight:700;">Log in</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+</div>
+
 <!-- ADMIN PANEL MODAL -->
 <div class="modal-overlay" id="adminModal">
-  <div class="modal-card" style="max-width:720px;">
+  <div class="modal-card" style="max-width:740px;">
     <div class="modal-header">
       <div style="display:flex; align-items:center; gap:10px;">
-        <span style="background:var(--red); color:#fff; font-size:10px; font-family:var(--f-mono); padding:3px 8px; border-radius:4px; font-weight:700;">RESTRICTED</span>
-        <h3>SkyRoute Admin Panel</h3>
+        <span style="background:var(--red); color:#fff; font-size:10px; font-family:var(--f-mono); padding:3px 8px; border-radius:4px; font-weight:700;">ADMIN ONLY</span>
+        <h3>SkyRoute Airline Control Panel</h3>
       </div>
       <button class="modal-close" onclick="closeModal('adminModal')">&times;</button>
     </div>
@@ -807,17 +907,15 @@ footer{background:var(--night-4); padding:60px 0 30px;}
               <input type="text" id="addArrive" placeholder="Arrive (2026-09-20 16:30)" required>
               <input type="number" id="addPrice" placeholder="Fare &#8377; (e.g. 5200)" required>
             </div>
-            <button type="submit" class="search-btn" style="padding:10px;">Add Flight to Database</button>
+            <button type="submit" class="search-btn" style="padding:10px;">Add Flight to System</button>
           </form>
         </div>
 
         <!-- Manage Flights -->
         <div class="admin-box">
-          <h4>Current Flights (<span id="adminFlightCount">0</span>)</h4>
+          <h4>Active Flights (<span id="adminFlightCount">0</span>)</h4>
           <div style="max-height:180px; overflow-y:auto;">
-            <table class="admin-table" id="adminFlightsTable">
-              <!-- Injected by JS -->
-            </table>
+            <table class="admin-table" id="adminFlightsTable"></table>
           </div>
         </div>
 
@@ -825,23 +923,16 @@ footer{background:var(--night-4); padding:60px 0 30px;}
         <div class="admin-box">
           <h4>All System Bookings (<span id="adminBookingCount">0</span>)</h4>
           <div style="max-height:180px; overflow-y:auto;">
-            <table class="admin-table" id="adminBookingsTable">
-              <!-- Injected by JS -->
-            </table>
+            <table class="admin-table" id="adminBookingsTable"></table>
           </div>
         </div>
 
         <!-- Users -->
         <div class="admin-box">
-          <h4>Registered Accounts</h4>
-          <table class="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
-            <tbody>
-              <tr><td>SkyRoute Admin</td><td>admin@skyroute.com</td><td><span style="color:var(--red); font-weight:700;">ADMIN</span></td></tr>
-              <tr><td>Nihal Nambiar</td><td>nihal@example.com</td><td>USER</td></tr>
-              <tr><td>Veena</td><td>veena@example.com</td><td>USER</td></tr>
-            </tbody>
-          </table>
+          <h4>Registered Accounts (<span id="adminUserCount">0</span>)</h4>
+          <div style="max-height:140px; overflow-y:auto;">
+            <table class="admin-table" id="adminUsersTable"></table>
+          </div>
         </div>
 
       </div>
@@ -915,7 +1006,13 @@ footer{background:var(--night-4); padding:60px 0 30px;}
 </div>
 
 <script>
-// MASTER FLIGHT DATA
+// INITIAL SEED DATA
+const defaultUsers = [
+  { id: 1, full_name: "SkyRoute Admin", email: "admin@skyroute.com", password: "Admin@123", role: "admin" },
+  { id: 2, full_name: "Nihal Nambiar", email: "nihal@example.com", password: "Nihal@123", role: "user" },
+  { id: 3, full_name: "Veena", email: "veena@example.com", password: "Veena@123", role: "user" }
+];
+
 const initialFlights = [
   { id: 1, flight_number: "SR204", origin_code: "COK", origin_city: "Kochi", destination_code: "DEL", destination_city: "Delhi", departure_time: "2026-09-20 09:40", arrival_time: "2026-09-20 12:10", gate: "G12", price: 6200, seats_total: 60, seats_taken: 14 },
   { id: 2, flight_number: "SR118", origin_code: "CCJ", origin_city: "Kozhikode", destination_code: "BLR", destination_city: "Bengaluru", departure_time: "2026-09-20 11:05", arrival_time: "2026-09-20 12:35", gate: "G04", price: 3800, seats_total: 60, seats_taken: 22 },
@@ -927,14 +1024,158 @@ const initialFlights = [
   { id: 8, flight_number: "SR741", origin_code: "GOI", origin_city: "Goa", destination_code: "BOM", destination_city: "Mumbai", departure_time: "2026-09-21 10:00", arrival_time: "2026-09-21 11:05", gate: "G11", price: 3300, seats_total: 60, seats_taken: 12 }
 ];
 
+// STATE STORAGE
+let currentUser = JSON.parse(localStorage.getItem('skyroute_currentUser') || 'null');
+let users = JSON.parse(localStorage.getItem('skyroute_users') || JSON.stringify(defaultUsers));
 let flights = JSON.parse(localStorage.getItem('skyroute_flights') || JSON.stringify(initialFlights));
 let activeBookingFlight = null;
 
+// FLASH TOAST NOTIFICATIONS
+function showToast(message, type = 'success') {
+  const wrap = document.getElementById('flashWrap');
+  const toast = document.createElement('div');
+  toast.className = `flash flash-${type}`;
+  toast.innerHTML = `<span>${message}</span><span style="cursor:pointer; margin-left:12px; font-weight:700;" onclick="this.parentElement.remove()">&times;</span>`;
+  wrap.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 4000);
+}
+
+// AUTH MANAGEMENT
+function renderNavAuth() {
+  const navCta = document.getElementById('navCta');
+  const bookingCount = getBookings().length;
+
+  if (currentUser) {
+    const isAdmin = currentUser.role === 'admin';
+    const shortName = currentUser.full_name.split(' ')[0];
+
+    navCta.innerHTML = `
+      ${isAdmin ? `
+        <button class="btn-admin" onclick="openAdminModal()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Admin Panel
+        </button>
+      ` : `
+        <button class="btn-ghost" onclick="openMyBookings()">My Bookings (${bookingCount})</button>
+      `}
+      <span class="user-badge ${isAdmin ? 'admin' : ''}">
+        ${isAdmin ? '👑' : '👤'} ${shortName}
+      </span>
+      <button class="btn-ghost" onclick="logout()" style="color:var(--red);">Log Out</button>
+    `;
+    document.getElementById('stubStatus').innerText = `${shortName} (${currentUser.role.toUpperCase()})`;
+  } else {
+    navCta.innerHTML = `
+      <button class="btn-ghost" onclick="openAuthModal('login')">Sign In</button>
+      <button class="btn-amber" onclick="openAuthModal('register')">Register</button>
+    `;
+    document.getElementById('stubStatus').innerText = "Guest (Sign in to book)";
+  }
+}
+
+function openAuthModal(mode = 'login') {
+  toggleAuthMode(mode);
+  document.getElementById('authModal').classList.add('open');
+}
+
+function toggleAuthMode(mode) {
+  if (mode === 'login') {
+    document.getElementById('authModalTitle').innerText = 'Member Sign In';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+  } else {
+    document.getElementById('authModalTitle').innerText = 'Create Account';
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+  }
+}
+
+function quickLogin(email, pass) {
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('loginPassword').value = pass;
+  document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPassword').value;
+
+  const found = users.find(u => u.email.toLowerCase() === email && u.password === pass);
+  if (found) {
+    currentUser = found;
+    localStorage.setItem('skyroute_currentUser', JSON.stringify(currentUser));
+    renderNavAuth();
+    closeModal('authModal');
+    showToast(`Welcome back, ${found.full_name}! (${found.role.toUpperCase()})`, 'success');
+
+    // If an action was pending (e.g. booking)
+    if (activeBookingFlight) {
+      openBookingModal(activeBookingFlight.id);
+    }
+  } else {
+    showToast('Invalid email or password. Use demo login buttons above.', 'error');
+  }
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('regPassword').value;
+  const conf = document.getElementById('regConfirm').value;
+
+  if (pass !== conf) {
+    showToast('Passwords do not match.', 'error');
+    return;
+  }
+  if (users.some(u => u.email.toLowerCase() === email)) {
+    showToast('An account with this email already exists.', 'error');
+    return;
+  }
+
+  const newUser = {
+    id: Date.now(),
+    full_name: name,
+    email: email,
+    password: pass,
+    role: "user"
+  };
+
+  users.push(newUser);
+  localStorage.setItem('skyroute_users', JSON.stringify(users));
+  currentUser = newUser;
+  localStorage.setItem('skyroute_currentUser', JSON.stringify(currentUser));
+  renderNavAuth();
+  closeModal('authModal');
+  showToast(`Account created! Welcome, ${name}.`, 'success');
+}
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('skyroute_currentUser');
+  renderNavAuth();
+  showToast('Logged out successfully.', 'success');
+}
+
+function handleAdminNavClick() {
+  if (!currentUser) {
+    showToast('Please sign in as Admin to access the management panel.', 'error');
+    openAuthModal('login');
+    return;
+  }
+  if (currentUser.role !== 'admin') {
+    showToast('403 Forbidden: Your account does not have administrator privileges.', 'error');
+    return;
+  }
+  openAdminModal();
+}
+
+// STORAGE HELPERS
 function saveFlightsToStorage() {
   localStorage.setItem('skyroute_flights', JSON.stringify(flights));
 }
 
-// Persistent Bookings
 function getBookings() {
   try {
     return JSON.parse(localStorage.getItem('skyroute_bookings') || '[]');
@@ -947,15 +1188,10 @@ function saveBooking(booking) {
   const list = getBookings();
   list.unshift(booking);
   localStorage.setItem('skyroute_bookings', JSON.stringify(list));
-  updateBookingCount();
+  renderNavAuth();
 }
 
-function updateBookingCount() {
-  const count = getBookings().length;
-  document.getElementById('bookingCount').innerText = count;
-}
-
-// Render Board
+// BOARD RENDERING
 function renderBoard(filterOrigin = 'ALL') {
   const boardEl = document.getElementById('boardRows');
   const filtered = filterOrigin === 'ALL' ? flights : flights.filter(f => f.origin_code === filterOrigin);
@@ -976,7 +1212,7 @@ function renderBoard(filterOrigin = 'ALL') {
         <span>
           ${isFull 
             ? `<span style="font-size:12px; color:var(--red);">Sold out</span>` 
-            : `<button class="btn-book-sm" onclick="openBookingModal(${f.id})">Book</button>`
+            : `<button class="btn-book-sm" onclick="initiateBooking(${f.id})">Book</button>`
           }
         </span>
       </div>
@@ -990,7 +1226,7 @@ function filterBoard(code, btn) {
   renderBoard(code);
 }
 
-// Render Flights
+// FLIGHTS RENDERING
 function renderFlights(list = flights) {
   const listEl = document.getElementById('flightsList');
   if (list.length === 0) {
@@ -1018,7 +1254,7 @@ function renderFlights(list = flights) {
           <div class="flight-price">&#8377;${f.price.toLocaleString('en-IN')}</div>
           ${isFull 
             ? `<button class="btn-outline" style="opacity:0.5; cursor:not-allowed;" disabled>Sold out</button>`
-            : `<button class="btn-amber" onclick="openBookingModal(${f.id})">Book Seat</button>`
+            : `<button class="btn-amber" onclick="initiateBooking(${f.id})">Book Seat</button>`
           }
         </div>
       </div>
@@ -1054,7 +1290,17 @@ function resetFilters() {
   renderFlights(flights);
 }
 
-// Booking Logic
+// BOOKING FLOW (LOGIN REQUIRED)
+function initiateBooking(flightId) {
+  if (!currentUser) {
+    activeBookingFlight = flights.find(f => f.id === flightId);
+    showToast('Please sign in or register to book a flight.', 'error');
+    openAuthModal('login');
+    return;
+  }
+  openBookingModal(flightId);
+}
+
 function openBookingModal(flightId) {
   const flight = flights.find(f => f.id === flightId);
   if (!flight) return;
@@ -1066,6 +1312,8 @@ function openBookingModal(flightId) {
     Departure: ${flight.departure_time} · Arrival: ${flight.arrival_time}<br>
     Gate: ${flight.gate} · Fare: &#8377;${flight.price.toLocaleString('en-IN')}
   `;
+
+  document.getElementById('passengerName').value = currentUser ? currentUser.full_name : '';
 
   const seatPicker = document.getElementById('seatPicker');
   const seatLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -1102,7 +1350,7 @@ function confirmBooking(e) {
   const seat = document.getElementById('selectedSeatInput').value;
 
   if (!seat) {
-    alert('Please choose an available seat.');
+    showToast('Please select a seat from the cabin layout.', 'error');
     return;
   }
 
@@ -1110,6 +1358,7 @@ function confirmBooking(e) {
   const booking = {
     booking_ref: pnr,
     passenger_name: passenger,
+    user_email: currentUser ? currentUser.email : 'guest@skyroute.com',
     seat_number: seat,
     flight_number: activeBookingFlight.flight_number,
     origin_code: activeBookingFlight.origin_code,
@@ -1130,6 +1379,7 @@ function confirmBooking(e) {
   renderBoard();
   renderFlights();
   closeModal('bookingModal');
+  showToast('Booking confirmed! E-ticket generated.', 'success');
   showTicket(booking);
 }
 
@@ -1163,12 +1413,15 @@ function showTicket(b) {
   document.getElementById('ticketModal').classList.add('open');
 }
 
-// My Bookings Modal
+// MY BOOKINGS MODAL
 function openMyBookings() {
-  const list = getBookings();
+  const allBookings = getBookings();
+  const userEmail = currentUser ? currentUser.email.toLowerCase() : '';
+  const list = allBookings.filter(b => !userEmail || (b.user_email && b.user_email.toLowerCase() === userEmail));
+
   const container = document.getElementById('myBookingsList');
   if (list.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--muted-2); font-family:var(--f-mono);">No bookings made yet. Search a flight to reserve your first ticket!</div>`;
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--muted-2); font-family:var(--f-mono);">No bookings reserved under your account yet. Search a flight to book!</div>`;
   } else {
     container.innerHTML = list.map(b => `
       <div style="background:var(--paper-2); padding:16px 20px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;">
@@ -1232,6 +1485,21 @@ function renderAdminPanel() {
       </tbody>
     `;
   }
+
+  document.getElementById('adminUserCount').innerText = users.length;
+  const userTable = document.getElementById('adminUsersTable');
+  userTable.innerHTML = `
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>
+    <tbody>
+      ${users.map(u => `
+        <tr>
+          <td>${u.full_name}</td>
+          <td>${u.email}</td>
+          <td><span style="font-weight:700; color:${u.role === 'admin' ? 'var(--red)' : 'var(--ink)'}">${u.role.toUpperCase()}</span></td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
 }
 
 function adminAddFlight(e) {
@@ -1257,7 +1525,7 @@ function adminAddFlight(e) {
   renderFlights();
   renderAdminPanel();
   document.getElementById('adminAddFlightForm').reset();
-  alert(`Flight ${newFlight.flight_number} successfully added to database!`);
+  showToast(`Flight ${newFlight.flight_number} added successfully!`, 'success');
 }
 
 function adminDeleteFlight(id) {
@@ -1267,6 +1535,7 @@ function adminDeleteFlight(id) {
     renderBoard();
     renderFlights();
     renderAdminPanel();
+    showToast('Flight removed.', 'success');
   }
 }
 
@@ -1279,11 +1548,11 @@ function scrollToSection(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Init
+// INIT
 document.addEventListener('DOMContentLoaded', () => {
+  renderNavAuth();
   renderBoard();
   renderFlights();
-  updateBookingCount();
 });
 </script>
 </body>
