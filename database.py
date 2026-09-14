@@ -5,6 +5,7 @@ Handles all SQLite database setup and connection logic for SkyRoute.
 
 import sqlite3
 import os
+# pyrefly: ignore [missing-import]
 from werkzeug.security import generate_password_hash
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skyroute.db")
